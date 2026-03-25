@@ -9,8 +9,8 @@ function saveAll<T>(key: string, items: T[]): void {
   localStorage.setItem(key, JSON.stringify(items));
 }
 
-export function getSpells(): Spell[] { return getAll<Spell>('metaserv_spells'); }
-export function saveSpells(s: Spell[]) { saveAll('metaserv_spells', s); }
+export function getSpells(): Spell[] { return getAll<Spell>('fif_spells'); }
+export function saveSpells(s: Spell[]) { saveAll('fif_spells', s); }
 export function getSpell(id: string) { return getSpells().find(s => s.id === id); }
 export function saveSpell(spell: Spell) {
   const all = getSpells();
@@ -20,8 +20,8 @@ export function saveSpell(spell: Spell) {
 }
 export function deleteSpell(id: string) { saveSpells(getSpells().filter(s => s.id !== id)); }
 
-export function getCharacters(): Character[] { return getAll<Character>('metaserv_chars'); }
-export function saveCharacters(c: Character[]) { saveAll('metaserv_chars', c); }
+export function getCharacters(): Character[] { return getAll<Character>('fif_chars'); }
+export function saveCharacters(c: Character[]) { saveAll('fif_chars', c); }
 export function getCharacter(id: string) { return getCharacters().find(c => c.id === id); }
 export function saveCharacter(ch: Character) {
   const all = getCharacters();
@@ -31,8 +31,8 @@ export function saveCharacter(ch: Character) {
 }
 export function deleteCharacter(id: string) { saveCharacters(getCharacters().filter(c => c.id !== id)); }
 
-export function getMonsters(): Monster[] { return getAll<Monster>('metaserv_monsters'); }
-export function saveMonsters(m: Monster[]) { saveAll('metaserv_monsters', m); }
+export function getMonsters(): Monster[] { return getAll<Monster>('fif_monsters'); }
+export function saveMonsters(m: Monster[]) { saveAll('fif_monsters', m); }
 export function getMonster(id: string) { return getMonsters().find(m => m.id === id); }
 export function saveMonster(mon: Monster) {
   const all = getMonsters();
@@ -43,9 +43,9 @@ export function saveMonster(mon: Monster) {
 export function deleteMonster(id: string) { saveMonsters(getMonsters().filter(m => m.id !== id)); }
 
 export function getSettings(): ScalingSettings {
-  const raw = localStorage.getItem('metaserv_settings');
+  const raw = localStorage.getItem('fif_settings');
   return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : { ...DEFAULT_SETTINGS };
 }
 export function saveSettings(s: ScalingSettings) {
-  localStorage.setItem('metaserv_settings', JSON.stringify(s));
+  localStorage.setItem('fif_settings', JSON.stringify(s));
 }

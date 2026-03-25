@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { HashRouter, Routes, Route, Link } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import SpellEditorPage from './pages/SpellEditorPage';
 import CharacterEditorPage from './pages/CharacterEditorPage';
@@ -9,9 +9,9 @@ import CombatPage from './pages/CombatPage';
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <nav className="top-nav">
-        <Link to="/" className="nav-brand">MetaServ</Link>
+        <Link to="/" className="nav-brand">fif</Link>
         <div className="nav-links">
           <Link to="/spells">Sorts</Link>
           <Link to="/characters">Personnages</Link>
@@ -29,6 +29,6 @@ export default function App() {
         <Route path="/combat-setup" element={<CombatSetupPage />} />
         <Route path="/combat" element={<CombatPage />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }

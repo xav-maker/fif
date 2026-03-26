@@ -56,6 +56,16 @@ a:hover { text-decoration: underline; }
 .nav-card p { color: var(--text-dim); font-size: 0.9rem; }
 .nav-card-accent { border-color: var(--accent); }
 
+/* ─── Data Section ─── */
+.data-section {
+  margin-top: 32px; padding: 20px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius);
+}
+.data-section h2 { margin-bottom: 4px; }
+.data-section p { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 12px; }
+.import-group { display: flex; align-items: center; gap: 10px; }
+.mode-toggle { font-size: 0.9rem; cursor: pointer; }
+
 /* ─── Buttons ─── */
 .btn {
   display: inline-block; padding: 8px 16px; border: 1px solid var(--border); background: var(--surface);

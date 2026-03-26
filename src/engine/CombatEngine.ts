@@ -2,7 +2,7 @@ import { v4 as uuid } from 'uuid';
 import type {
   Spell, Character, Monster, MonsterAttack, ScalingSettings,
   SpellEffect, SpellCondition, CombatantState, CombatLogEntry,
-  CombatPhase, Weather, DamageType, TimelineEvent, TimelineEventType,
+  CombatPhase, Weather, DamageType, AnimalSpirit, TimelineEvent, TimelineEventType,
 } from '../models/types';
 import { getStatNamesForDamageType } from '../models/types';
 import { calculateRawDamage, applyDefense, applyDotDefense, calculateCooldown, calculatePassDuration } from './formulas';
@@ -164,8 +164,8 @@ export class CombatEngine {
     this.chosenAllyId = null;
 
     const allEffects = this.collectAllEffects(spell);
-    const needsEnemy = allEffects.some(e => e.targetType === 'singleEnemy');
-    const needsAlly = allEffects.some(e => e.targetType === 'singleAlly');
+    const needsEnemy = allEffects.some(e => e.effect.targetType === 'singleEnemy');
+    const needsAlly = allEffects.some(e => e.effect.targetType === 'singleAlly');
     this.pendingTargets = { needsEnemy, needsAlly };
 
     if (!needsEnemy && !needsAlly) {
@@ -222,8 +222,8 @@ export class CombatEngine {
     const logs: CombatLogEntry[] = [];
 
     const allEffects = this.collectAllEffects(spell);
-    for (const eff of allEffects) {
-      logs.push(...this.resolveEffect(eff, caster));
+    for (const { effect, spiritFilter } of allEffects) {
+      logs.push(...this.resolveEffect(effect, caster, spiritFilter));
     }
 
     if (caster.className === 'clerc') {
@@ -245,14 +245,17 @@ export class CombatEngine {
     return logs;
   }
 
-  private collectAllEffects(spell: Spell): SpellEffect[] {
-    const effects = [...spell.effects];
+  private collectAllEffects(spell: Spell): { effect: SpellEffect; spiritFilter?: AnimalSpirit }[] {
+    const result: { effect: SpellEffect; spiritFilter?: AnimalSpirit }[] =
+      spell.effects.map(effect => ({ effect }));
     for (const cg of spell.conditionalEffects) {
-      if (this.evaluateCondition(cg.condition)) {
-        effects.push(...cg.effects);
+      if (cg.condition.type === 'targetHasSpirit') {
+        result.push(...cg.effects.map(effect => ({ effect, spiritFilter: cg.condition.type === 'targetHasSpirit' ? cg.condition.spirit : undefined })));
+      } else if (this.evaluateCondition(cg.condition)) {
+        result.push(...cg.effects.map(effect => ({ effect })));
       }
     }
-    return effects;
+    return result;
   }
 
   private evaluateCondition(cond: SpellCondition): boolean {
@@ -275,10 +278,10 @@ export class CombatEngine {
 
   /* ─── resolve single effect ─── */
 
-  private resolveEffect(eff: SpellEffect, caster: CombatantState): CombatLogEntry[] {
+  private resolveEffect(eff: SpellEffect, caster: CombatantState, spiritFilter?: AnimalSpirit): CombatLogEntry[] {
     let targets = this.resolveTargets(eff.targetType, caster);
-    if (eff.type === 'setAnimalSpirit' || eff.targetType === 'singleAlly' || eff.targetType === 'singleEnemy') {
-      // already filtered by target selection
+    if (spiritFilter) {
+      targets = targets.filter(t => t.animalSpirit === spiritFilter);
     }
     const logs: CombatLogEntry[] = [];
     for (const target of targets) {
@@ -629,14 +632,19 @@ export class CombatEngine {
     this.chosenAllyId = allies.length > 0 ? allies[Math.floor(Math.random() * allies.length)].id : null;
     this.rageActivated = actor.rage > 50;
 
-    const allEffects = [...chosen.effects];
+    const allEffects: { effect: SpellEffect; spiritFilter?: AnimalSpirit }[] =
+      chosen.effects.map(effect => ({ effect }));
     for (const cg of chosen.conditionalEffects ?? []) {
-      if (this.evaluateCondition(cg.condition)) allEffects.push(...cg.effects);
+      if (cg.condition.type === 'targetHasSpirit') {
+        allEffects.push(...cg.effects.map(effect => ({ effect, spiritFilter: cg.condition.type === 'targetHasSpirit' ? cg.condition.spirit : undefined })));
+      } else if (this.evaluateCondition(cg.condition)) {
+        allEffects.push(...cg.effects.map(effect => ({ effect })));
+      }
     }
 
     const logs: CombatLogEntry[] = [];
-    for (const eff of allEffects) {
-      logs.push(...this.resolveEffect(eff, actor));
+    for (const { effect, spiritFilter } of allEffects) {
+      logs.push(...this.resolveEffect(effect, actor, spiritFilter));
     }
 
     const cd = calculateCooldown(chosen.baseCooldown, this.getEffectiveStat(actor, 'speed'), this.settings.cooldownCap);

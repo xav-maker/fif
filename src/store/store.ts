@@ -49,3 +49,60 @@ export function getSettings(): ScalingSettings {
 export function saveSettings(s: ScalingSettings) {
   localStorage.setItem('fif_settings', JSON.stringify(s));
 }
+
+export interface ExportData {
+  version: number;
+  exportedAt: string;
+  spells: Spell[];
+  characters: Character[];
+  monsters: Monster[];
+  settings: ScalingSettings;
+}
+
+export function exportAllData(): string {
+  const data: ExportData = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    spells: getSpells(),
+    characters: getCharacters(),
+    monsters: getMonsters(),
+    settings: getSettings(),
+  };
+  return JSON.stringify(data, null, 2);
+}
+
+function mergeById<T extends { id: string }>(existing: T[], incoming: T[]): T[] {
+  const map = new Map(existing.map(item => [item.id, item]));
+  for (const item of incoming) map.set(item.id, item);
+  return Array.from(map.values());
+}
+
+export function importAllData(json: string, mode: 'replace' | 'merge'): { spells: number; characters: number; monsters: number } {
+  let data: ExportData;
+  try {
+    data = JSON.parse(json);
+  } catch {
+    throw new Error('Fichier JSON invalide');
+  }
+  if (!data || typeof data !== 'object') throw new Error('Format invalide');
+
+  const spells = Array.isArray(data.spells) ? data.spells : [];
+  const characters = Array.isArray(data.characters) ? data.characters : [];
+  const monsters = Array.isArray(data.monsters) ? data.monsters : [];
+
+  if (mode === 'replace') {
+    saveSpells(spells);
+    saveCharacters(characters);
+    saveMonsters(monsters);
+  } else {
+    saveSpells(mergeById(getSpells(), spells));
+    saveCharacters(mergeById(getCharacters(), characters));
+    saveMonsters(mergeById(getMonsters(), monsters));
+  }
+
+  if (data.settings && typeof data.settings === 'object') {
+    saveSettings({ ...DEFAULT_SETTINGS, ...data.settings });
+  }
+
+  return { spells: spells.length, characters: characters.length, monsters: monsters.length };
+}
